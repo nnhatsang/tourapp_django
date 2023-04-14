@@ -70,7 +70,7 @@ class BookTour(BaseModel):
 
 # user like cmt rating
 class Comment(BaseModel):
-    tour = models.ForeignKey(Tour, on_delete=models.SET_NULL, null=True)
+    tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='comments', null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=255, blank=True)
 
