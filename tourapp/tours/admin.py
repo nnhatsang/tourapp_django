@@ -16,12 +16,17 @@ from django.urls import path
 from datetime import date
 
 
-# class AttractionsForm(forms.ModelForm):
-#     description = forms.CharField(widget=CKEditorUploadingWidget)
-#
-#     class Meta:
-#         model = Attraction
-#         fields = '__all__'
+class AttractionsForm(forms.ModelForm):
+    description = forms.CharField(widget=CKEditorUploadingWidget)
+
+    class Meta:
+        model = Attraction
+        fields = '__all__'
+
+
+class AttractionAdmin(admin.ModelAdmin):
+    search_fields = ('location',)
+    form = AttractionsForm
 
 
 class TourForm(forms.ModelForm):
@@ -30,6 +35,15 @@ class TourForm(forms.ModelForm):
     class Meta:
         model = Tour
         fields = '__all__'
+
+
+class TourAdmin(admin.ModelAdmin):
+    model = Tour
+    exclude = ('tag',)
+    list_display = ('pk', 'name', 'attraction')
+    list_display_links = ('name',)
+    search_fields = ('name',)
+    form = TourForm
 
 
 class MyUserAdmin(UserAdmin):
@@ -62,55 +76,20 @@ class MyUserAdmin(UserAdmin):
     except NotRegistered:
         pass
 
-    # fieldsets = (
-    #     ('Login info', {
-    #         'fields': ('avatar_view', 'avatar', 'username', 'password')
-    #     }),
-    #     ('Personal info', {
-    #         'fields': ('first_name', 'last_name', 'gender', 'home_town', 'date_of_birth', 'email', 'phone')
-    #     }),
-    #     ('Customer', {
-    #         'fields': (
-    #             'is_customer',
-    #         ),
-    #         'description': '<div class="help">%s</div>' % "Designates whether this user is a customer or not",
-    #     }),
-    #     ('Permissions', {
-    #         'fields': (
-    #             'is_staff', 'is_superuser',
-    #             'groups', 'user_permissions'
-    #         )
-    #     }),
-    #     ('Other info', {
-    #         'fields': ('is_active', 'last_login', 'date_joined')
-    #     })
-    # )
-
-
-class AttractionAdmin(admin.ModelAdmin):
-    search_fields = ('location',)
-
-
-
-class TourAdmin(admin.ModelAdmin):
-    model = Tour
-    exclude = ('tag',)
-    list_display = ('pk', 'name', 'attraction', 'image_view')
-    list_display_links = ('name',)
+class TagAdmin(admin.ModelAdmin):
+    model = Tag
     search_fields = ('name',)
-    form = TourForm
-
-    def image_view(self, new):
-        if (new.image):
-            return mark_safe(
-                '<img src="/{url}" width="120" />'.format(url=new.image.name)
-            )
-
 
 # Register your models here.
 
 admin.site.register(User, MyUserAdmin)
 admin.site.register(Tour, TourAdmin)
-admin.site.register(Attraction)
+admin.site.register(Attraction, AttractionAdmin)
 admin.site.register(Rate)
 admin.site.register(Comment)
+admin.site.register(Tag)
+admin.site.register(Bill)
+admin.site.register(Like)
+admin.site.register(BookTour)
+
+

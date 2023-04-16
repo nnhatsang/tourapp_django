@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'tours.apps.ToursConfig',
     'ckeditor',
     'ckeditor_uploader',
+    'rest_framework',
 ]
 
 AUTH_USER_MODEL = 'tours.User'
@@ -55,7 +56,6 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'tourapp.urls'
 CKEDITOR_UPLOAD_PATH = "images/ckeditor/"
 MEDIA_ROOT = '%s/tours/static/' % BASE_DIR
-
 
 TEMPLATES = [
     {
@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'tourapp.wsgi.application'
 #
 # pymysql.install_as_MySQLdb()
 DATABASES = {
-     'default': {
+    'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'tourdb',
         'USER': 'root',
@@ -132,4 +132,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 client_secret = ''
 client_id = ''
-
