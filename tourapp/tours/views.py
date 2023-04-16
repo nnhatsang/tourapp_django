@@ -1,4 +1,4 @@
-from  rest_framework import viewsets
+from  rest_framework import viewsets,viewsets, generics,status
 from. models import *
 from .serializers import *
 class AttractionViewset(viewsets.ModelViewSet):

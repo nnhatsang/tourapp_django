@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'ckeditor_uploader',
     'rest_framework',
+    'drf_yasg',
 ]
 
 AUTH_USER_MODEL = 'tours.User'
