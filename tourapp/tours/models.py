@@ -32,7 +32,6 @@ class Tag(models.Model):
 
 # tour
 class Tour(BaseModel):
-    image = models.ImageField(upload_to='image/tours/%Y/%m/', null=True)
     name = models.CharField(max_length=100, null=False, default="none")
     price_for_adults = models.FloatField(default=0)
     price_for_children = models.FloatField(default=0)
@@ -47,8 +46,19 @@ class Tour(BaseModel):
         return self.name
 
 
+class ImageTour(BaseModel):
+    image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
+    tour = models.ForeignKey('Tour', on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name = 'Image of tour'
+    def __str__(self):
+        return self.tour
+
+
 class Attraction(BaseModel):
     location = models.CharField(max_length=50, default="none")
+
     # description = RichTextField(null=True)
 
     def __str__(self):
@@ -62,7 +72,7 @@ class BookTour(BaseModel):
     num_of_children = models.IntegerField(default=0)
 
     def __str__(self):
-        return " \"{0}\" --- \"{1}\" ".format(self.user.__str__(), self.tour.__str__())
+        return " User: \"{0}\" Booking tour : \"{1}\" ".format(self.user.__str__(),self.tour.__str__())
 
     class Meta:
         unique_together = ('user', 'tour')

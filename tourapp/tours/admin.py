@@ -26,6 +26,8 @@ class AttractionsForm(forms.ModelForm):
 
 class AttractionAdmin(admin.ModelAdmin):
     search_fields = ('location',)
+    list_display = ('pk', 'location', 'active')
+    list_display_links = ('pk', 'location', 'active')
     form = AttractionsForm
 
 
@@ -45,6 +47,36 @@ class TourAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     form = TourForm
 
+    def view_image(self, new):
+        if (new.image):
+            return mark_safe(
+                '<img src="/{url}" width="120" />'.format(url=new.image.name)
+            )
+
+
+class ImageTourAdmin(admin.ModelAdmin):
+    model = ImageTour
+    readonly_fields = ('view_image',)
+
+    def view_image(self, obj):
+        if (obj.image):
+            return mark_safe(
+                '<img src="/{url}" width="120" />'.format(url=obj.image.name)
+            )
+
+    fieldsets = (
+        ('Image of tour', {
+            'fields': ('tour', 'active', 'image_view', 'image')
+        }),
+    )
+
+class BookingTourAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'booking_information', 'created_date', 'updated_date', 'active')
+    list_display_links = ('pk', 'booking_information', 'created_date', 'updated_date', 'active')
+
+    def booking_information(self, obj):
+        return obj.__str__()
+
 
 class MyUserAdmin(UserAdmin):
     model = User
@@ -61,12 +93,12 @@ class MyUserAdmin(UserAdmin):
                 '<img src="/{url}" width="120" />'.format(url=user.avatar.name)
             )
 
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('avatar', 'username', 'password1', 'password2', 'email')}
-         ),
-    )
+    # add_fieldsets = (
+    #     (None, {
+    #         'classes': ('wide',),
+    #         'fields': ('avatar', 'username', 'password1', 'password2', 'email')}
+    #      ),
+    # )
 
     form = UserChangeForm
     add_form = UserCreationForm
@@ -76,9 +108,11 @@ class MyUserAdmin(UserAdmin):
     except NotRegistered:
         pass
 
+
 class TagAdmin(admin.ModelAdmin):
     model = Tag
     search_fields = ('name',)
+
 
 # Register your models here.
 
@@ -90,6 +124,5 @@ admin.site.register(Comment)
 admin.site.register(Tag)
 admin.site.register(Bill)
 admin.site.register(Like)
-admin.site.register(BookTour)
-
-
+admin.site.register(BookTour, BookingTourAdmin)
+admin.site.register(ImageTour)
