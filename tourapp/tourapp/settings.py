@@ -40,8 +40,20 @@ INSTALLED_APPS = [
     'ckeditor_uploader',
     'rest_framework',
     'drf_yasg',
+    'oauth2_provider',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ),
+    'PAGE_SIZE': 5,
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser'
+    )
+
+}
 AUTH_USER_MODEL = 'tours.User'
 
 MIDDLEWARE = [
@@ -131,5 +143,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-client_secret = ''
-client_id = ''
+client_secret = '74A9fxv8IfEj49H0rmH0rALqzLn767TY7HqTus08U1J0MPPR8StGMb3BH5KWAMDo5g0JH2ccGFgjciJgXVCKoQWs29zPCof5c88VHRp0f5rcZH1mBFNmzf19yqu8Nw9q'
+client_id = '2YCvLNh9Q3cNsHUPnyZqIp0jbanujkX6ABANgAqg'

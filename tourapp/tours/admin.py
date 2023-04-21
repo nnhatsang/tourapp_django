@@ -28,7 +28,7 @@ class AttractionAdmin(admin.ModelAdmin):
     search_fields = ('location',)
     list_display = ('pk', 'location', 'active')
     list_display_links = ('pk', 'location', 'active')
-    form = AttractionsForm
+    # form = AttractionsForm
 
 
 class TourForm(forms.ModelForm):
