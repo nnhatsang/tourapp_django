@@ -4,6 +4,7 @@ from . import views
 
 r = routers.DefaultRouter()
 r.register('attraction', views.AttractionViewset)
+r.register('comment', views.CommentViewset)
 
 urlpatterns = [
     path('', include(r.urls)),
