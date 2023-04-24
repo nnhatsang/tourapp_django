@@ -12,11 +12,11 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-    # def save(self, *args, **kwargs):
-    #     if self.image:
-    #         super(AbstractUser, self).save(*args, **kwargs)
-    #         self.image.name = "static/{avt_name}".format(avt_name=self.avatar.name)
-    #         super(AbstractUser, self).save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if self.avatar:
+            super(AbstractUser, self).save(*args, **kwargs)
+            self.avatar.name = "static/{avt_name}".format(avt_name=self.avatar.name)
+            super(AbstractUser, self).save(*args, **kwargs)
 
 
 class BaseModel(models.Model):
