@@ -30,6 +30,23 @@ class CommentSerializer(ModelSerializer):
         exclude = ['tour']
 
 
+class AddCommentSerializer(ModelSerializer):
+    class Meta:
+        model = Comment
+        exclude = []
+        extra_kwargs = {
+            'user': {
+                'read_only': True
+            }
+        }
+
+
+class TagSerializer(ModelSerializer):
+    class Meta:
+        model: Tag
+        exclude = []
+
+
 # Tour
 class TourSerializer(ModelSerializer):
     attraction = AttractionCompactSerializer()
@@ -51,6 +68,24 @@ class TourSerializer(ModelSerializer):
                 "read_only": True
             },
         }
+
+
+class BookTourSerializer(ModelSerializer):
+    class Meta:
+        model = BookTour
+        exclude = []
+
+
+class AddTourSerializer(ModelSerializer):
+    class Meta:
+        model = BookTour
+        field = ['num_of_adults', 'num_of_children', 'user', 'tour']
+
+
+class BillSerializer(ModelSerializer):
+    class Meta:
+        model = Bill
+        exclude = []
 
 
 class ImageTourSerializer(ModelSerializer):
@@ -78,6 +113,12 @@ class ImageTourSerializer(ModelSerializer):
 class RateSerializer(ModelSerializer):
     class Meta:
         model = Rate
+        exclude = []
+
+
+class AddRateSerializer(ModelSerializer):
+    class Meta:
+        model = Rate
         fields = ['id', 'user', 'tour', 'star_rate']
         extra_kwargs = {
             'user': {
@@ -89,10 +130,10 @@ class RateSerializer(ModelSerializer):
 class UserSerializer(ModelSerializer):
     image_avatar = serializers.SerializerMethodField(source='avatar')
 
-    def get__image_avatar(self, obj):
+    def get_image_avatar(self, obj):
         request = self.context.get('request')
         path = "/%s" % obj.avatar.name
-        if obj.avatar:
+        if request:
             return request.build_absolute_uri(path)
 
     def create(self, validated_data):
@@ -111,7 +152,7 @@ class UserSerializer(ModelSerializer):
         #           'image_avatar']
         extra_kwargs = {
             'avatar': {
-                'read_only': True
+                'write_only': True
             }, 'image_avatar': {
                 'read_only': True
             }, 'password': {

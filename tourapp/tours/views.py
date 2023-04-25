@@ -1,4 +1,8 @@
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 from rest_framework import viewsets, viewsets, generics, status
+from rest_framework.exceptions import ValidationError
 from .models import *
 from .serializers import *
 from rest_framework.decorators import action
@@ -46,6 +50,7 @@ class RateViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIV
         return [permissions.AllowAny()]
 
 
+##USER
 class UserViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
@@ -60,5 +65,17 @@ class UserViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
     @action(methods=['get'], url_path='current_user', detail=False)
     def current_user(self, request):
         return Response(data=UserSerializer(request.user, context={'request': request}).data, status=status.HTTP_200_OK)
+
+    @action(methods=['post'], detail=True, url_path='change_password')
+    def change_password(self, request, pk=None):
+        user = self.get_object()
+        password = request.data.get('password')
+        if len(password) < 8:
+            raise ValidationError('Mật khẩu mới phải có ít nhất 8 ký tự.')
+        if password:
+            user.set_password(password)
+            user.save()
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 # Create your views here.
