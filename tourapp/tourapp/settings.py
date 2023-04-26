@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import cloudinary.api
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'oauth2_provider',
+    'cloudinary'
 ]
 
 REST_FRAMEWORK = {
@@ -87,6 +90,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'tourapp.wsgi.application'
+
+# cloudinary config
+cloudinary.config(
+    cloud_name="debpu6bvf",
+    api_key="917416417964682",
+    api_secret="fQU8qnEQ5kUSH1sjV64ZsA9Esk4"
+)
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -145,4 +155,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 client_secret = 'EiCySd7WrnG993TAmStwodi0Qou7UiGQTSC1Y9QCMOy8yVR6MA1XcbQih9j0uDesR84qs14EwKQ8sOFZllPZKhqcUydY634t9IhqsZ8tO8UoxlqjA9qWeAw4pdpp2ntx'
 client_id = 'bfC3485lV1Pf4y2TWOKi0P3Rq65g6jhj4nAr3Y0e'
-

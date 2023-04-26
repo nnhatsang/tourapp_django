@@ -40,6 +40,7 @@ class TourForm(forms.ModelForm):
 
 
 class TourAdmin(admin.ModelAdmin):
+
     list_display = ('pk', 'name', 'attraction', 'departure_date', 'end_date', 'avatar')
     list_display_links = ('name',)
     search_fields = ('name',)

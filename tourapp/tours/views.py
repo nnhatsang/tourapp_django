@@ -11,6 +11,10 @@ from rest_framework.parsers import MultiPartParser
 from .paginators import *
 from .perms import *
 
+from django.db.models import DecimalField, ExpressionWrapper, Q
+from decimal import Decimal
+from datetime import datetime, date
+
 
 class AttractionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Attraction.objects.filter(active=True)
@@ -32,11 +36,6 @@ class AttractionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retriev
         if kw is not None:
             tours = tours.filter(name__icontains=kw)
         return Response(AttractionSerializer(tours, many=True).data, status=status.HTTP_200_OK)
-
-
-# class TourViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
-#     queryset = Tour.objects.all()
-#     serializer_class = CommentSerializer
 
 
 # Ratiing
@@ -77,5 +76,54 @@ class UserViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
             user.save()
             return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+    queryset = Tour.objects.filter(active=True)
+    serializer_class = TourSerializer
+    pagination_class = TourPaginator
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        query = self.queryset
+        query = query.select_related('attraction')
+        kw = self.request.query_params.get('kw')
+        departure_date = self.request.query_params.get('departure_date')
+        price_from = self.request.query_params.get('price_from')
+        price_to = self.request.query_params.get('price_to')
+
+        if kw:
+            query = query.filter(name__icontains=kw)
+        if price_from or price_to:
+            price_expression = ExpressionWrapper(
+                Q(price_for_adults__gte=price_from, price_for_adults__lte=price_to) | \
+                Q(price_for_children__gte=price_from, price_for_children__lte=price_to),
+                output_field=DecimalField()
+            )
+            query = query.annotate(price_range=price_expression)
+            if price_from:
+                query = query.filter(Q(price_range__gte=Decimal(price_from)))
+            if price_to:
+                query = query.filter(Q(price_range__lte=Decimal(price_to)))
+        if departure_date:
+            try:
+                departure_date = datetime.strptime(departure_date, "%Y-%m-%d").date()
+            except:
+                query = query.none()
+            else:
+                query = query.filter(departure_date__year=departure_date.year,
+                                     departure_date__month=departure_date.month,
+                                     departure_date__day=departure_date.day)
+        return query
+
+    @action(methods=['get'], url_path='tags', detail=True)
+    def get_tags(self, request, pk):
+        tags = self.get_object().tag
+        return Response(data=TagSerializer(tags, many=True, context={'request': request}).data)
+
+    # @action(detail=True, methods=['get'], url_path='comments', permission_classes=[permissions.AllowAny])
+    # def get_comments(self, request, pk):
+    #     tour = self.get_object()
+    #     comments = tour.comments
 
 # Create your views here.

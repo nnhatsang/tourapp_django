@@ -20,7 +20,7 @@ class AttractionSerializer(ModelSerializer):
 class AttractionCompactSerializer(ModelSerializer):
     class Meta:
         model = Attraction
-        field = ['location']
+        fields = ['location']
 
 
 # Comment
@@ -43,7 +43,7 @@ class AddCommentSerializer(ModelSerializer):
 
 class TagSerializer(ModelSerializer):
     class Meta:
-        model: Tag
+        model = Tag
         exclude = []
 
 

@@ -6,6 +6,7 @@ r = routers.DefaultRouter()
 r.register('attraction', views.AttractionViewSet)
 r.register('rate', views.RateViewSet)
 r.register('users', views.UserViewSet)
+r.register('tours', views.TourViewSet)
 # r.register('comment', views.CommentViewset)
 
 urlpatterns = [
