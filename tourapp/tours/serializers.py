@@ -23,13 +23,6 @@ class AttractionCompactSerializer(ModelSerializer):
         fields = ['location']
 
 
-# Comment
-class CommentSerializer(ModelSerializer):
-    class Meta:
-        model = Comment
-        exclude = ['tour']
-
-
 class AddCommentSerializer(ModelSerializer):
     class Meta:
         model = Comment
@@ -62,10 +55,10 @@ class TourSerializer(ModelSerializer):
 
     class Meta:
         model = Tour
-        exclude = ['customers', 'image']
+        exclude = ['customers', 'image', 'tag']
         extra_kwargs = {
             'image_tour': {
-                "read_only": True
+               'read_only': True
             },
         }
 
@@ -101,7 +94,7 @@ class ImageTourSerializer(ModelSerializer):
 
     class Meta:
         model = ImageTour
-        exclude = ['image']
+        exclude = ['image_tour', 'descriptions']
         extra_kwargs = {
             'image_tour': {
                 "read_only": True
@@ -110,10 +103,6 @@ class ImageTourSerializer(ModelSerializer):
 
 
 # Rate
-class RateSerializer(ModelSerializer):
-    class Meta:
-        model = Rate
-        exclude = []
 
 
 class AddRateSerializer(ModelSerializer):
@@ -160,3 +149,19 @@ class UserSerializer(ModelSerializer):
             }
 
         }
+
+
+class CommentSerializer(ModelSerializer):
+    # user = UserSerializer()
+
+    class Meta:
+        exclude = ['tour']
+        model = Comment
+
+
+class RateSerializer(ModelSerializer):
+    # user = UserSerializer()
+
+    class Meta:
+        model = Rate
+        exclude = []

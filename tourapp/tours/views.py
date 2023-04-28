@@ -14,12 +14,15 @@ from .perms import *
 from django.db.models import DecimalField, ExpressionWrapper, Q
 from decimal import Decimal
 from datetime import datetime, date
+from django.core.paginator import Paginator
+from rest_framework.pagination import PageNumberPagination
 
 
 class AttractionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Attraction.objects.filter(active=True)
     serializer_class = AttractionSerializer
     pagination_class = AttractionPaginator
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         query = self.queryset
@@ -29,13 +32,13 @@ class AttractionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retriev
         return query
 
     @action(methods=['get'], detail=True, url_path='tours')
-    def tour(self, request, pk):
+    def get_tour(self, request, pk):
         tours = Attraction.objects.get(pk=pk).tours
         # tours=self.get_object()
-        kw = self.request.query_params('kw')
+        kw = self.request.query_params.get('kw')
         if kw is not None:
             tours = tours.filter(name__icontains=kw)
-        return Response(AttractionSerializer(tours, many=True).data, status=status.HTTP_200_OK)
+        return Response(TourSerializer(tours, many=True).data, status=status.HTTP_200_OK)
 
 
 # Ratiing
@@ -121,9 +124,28 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         tags = self.get_object().tag
         return Response(data=TagSerializer(tags, many=True, context={'request': request}).data)
 
-    # @action(detail=True, methods=['get'], url_path='comments', permission_classes=[permissions.AllowAny])
-    # def get_comments(self, request, pk):
-    #     tour = self.get_object()
-    #     comments = tour.comments
+    #
+    @action(detail=True, methods=['get'], url_path='comments', permission_classes=[permissions.AllowAny])
+    def get_comments(self, request, pk):
+        tour = self.get_object()
+        comments = tour.comments.select_related('user')
 
+        paginator = CommentPaginator()
+        page = paginator.paginate_queryset(comments, request)
+        return paginator.get_paginated_response(
+            CommentSerializer(page, many=True, context={'request': request}).data)
+
+    # @action(methods=['get'], url_path='images', detail=True, permission_classes=[permissions.AllowAny])
+    # def get_images(self, request, pk):
+    #     images = self.get_object().images
+    #     return Response(data=ImageTourSerializer(images, many=True, context={'request': request}).data,
+    #                     status=status.HTTP_200_OK)
+
+    # @action(methods=['get'], url_path='rate', detail=True, permission_classes=[permissions.AllowAny])
+    # def get_rate(self, request, pk):
+    #     rates = self.get_object().rate
+    #     paginator = RatePaginator()
+    #     page = paginator.paginate_queryset(rates, request)
+    #     return paginator.get_paginated_response(
+    #         RateSerializer(page, many=True, context={'request': request}).data)
 # Create your views here.
