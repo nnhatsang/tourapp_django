@@ -8,6 +8,7 @@ r.register('rates', views.RateViewSet)
 r.register('users', views.UserViewSet)
 r.register('tours', views.TourViewSet)
 r.register('comments', views.CommentViewSet)
+r.register('booktour', views.BookTourViewSet)
 
 urlpatterns = [
     path('', include(r.urls)),

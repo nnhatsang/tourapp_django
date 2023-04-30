@@ -69,7 +69,8 @@ class UserViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
     permission_classes = [permissions.AllowAny]
 
     def get_permissions(self):
-        if self.action in ['partial_update', 'update', 'retrieve', 'current_user', 'get_bill_unpaid', 'get_bill_paid']:
+        if self.action in ['partial_update', 'update', 'current_user', 'list_bill_paid', 'list_bill_unpaid',
+                           'list_liked_tour']:
             return [UserOwnerPermisson()]
         return [permissions.AllowAny()]
 
@@ -88,6 +89,60 @@ class UserViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPI
             user.save()
             return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], url_path='list_bill_paid', detail=False)
+    def list_bill_paid(self, request):
+        user = request.user
+        if user.is_authenticated:
+            book_tours = BookTour.objects.filter(user=user)
+            bill_paid = Bill.objects.filter(book_tour__in=book_tours, payment_state=True)
+            paginator = Paginator(bill_paid, 10)  # phân trang
+            page = request.GET.get('page')
+            bill_page = paginator.get_page(page) if page else paginator.get_page(1)
+            serializer = BillSerializer(bill_page, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], url_path='list_bill_unpaid', detail=False)
+    def list_bill_unpaid(self, request):
+        user = request.user
+        if user.is_authenticated:
+            book_tours = BookTour.objects.filter(user=user)
+            bill_paid = Bill.objects.filter(book_tour__in=book_tours, payment_state=False)
+            paginator = Paginator(bill_paid, 10)  # phân trang
+            page = request.GET.get('page')
+            bill_page = paginator.get_page(page) if page else paginator.get_page(1)
+            serializer = BillSerializer(bill_page, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], url_path='list_bill_unpaid', detail=False)
+    def list_bill_unpaid(self, request):
+        user = request.user
+        if user.is_authenticated:
+            book_tours = BookTour.objects.filter(user=user)
+            bill_paid = Bill.objects.filter(book_tour__in=book_tours, payment_state=False)
+            paginator = Paginator(bill_paid, 10)  # phân trang
+            page = request.GET.get('page')
+            bill_page = paginator.get_page(page) if page else paginator.get_page(1)
+            serializer = BillSerializer(bill_page, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], url_path='list_liked_tour', detail=False)
+    def list_liked_tours(self, request):
+        user = request.user
+        if user.is_authenticated:
+            likes = Like.objects.filter(user=user)
+            paginator = PageNumberPagination()
+            paginated_likes = paginator.paginate_queryset(likes, request)
+            serializer = LikeSerializer(paginated_likes, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        else:
+            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -150,18 +205,26 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         return Response(data=CustomerSerializer(customers, many=True, request={'request': request}).data)
 
     @action(methods=['get'], url_path='images', detail=True)
-    def get_images(self, request, pk):
-        images = self.get_object().images.all()
-        return Response(data=ImageTourSerializer(images, many=True, context={'request': request}).data,
-                        status=status.HTTP_200_OK)
+    def get_imagetour(self, request, pk=None):
+        try:
+            tour = Tour.objects.get(pk=pk)
+        except Tour.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
-    # @action(methods=['get'], url_path='rate', detail=True, permission_classes=[permissions.AllowAny])
-    # def get_rate(self, request, pk):
-    #     tour = self.get_object()
-    #     rates = tour.rates.all()
-    #     paginatior = RatePaginator()
-    #     rates = paginatior.paginate_queryset(rates, request)
-    #     return paginatior.get_paginated_response(RateSerializer(rates, many=True).data)
+        imagetours = ImageTour.objects.filter(tour=tour)
+        serializer = ImageTourSerializer(imagetours, many=True)
+
+        return Response(serializer.data)
+
+    @action(methods=['get'], url_path='rates', detail=True, permission_classes=[permissions.AllowAny])
+    def get_rates(self, request, pk):
+        tour = self.get_object()
+        rate = tour.rate
+        rate = rate.select_related('user')
+        paginator = pagination.PageNumberPagination()
+        pagination.PageNumberPagination.page_size = 10
+        rate = paginator.paginate_queryset(rate, request)
+        return paginator.get_paginated_response(RateSerializer(rate, many=True).data)
 
 
 class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
@@ -177,15 +240,25 @@ class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyA
         user = request.user
         if user:
             try:
-                star_rate = request.data.get('star_rate')
+                content = request.data.get('content')
                 tour = Tour.objects.get(pk=request.data.get('tour'))
             except:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            if tour and star_rate:
-                tour = Comment.objects.create(user=user, tour=tour, star_rate=star_rate)
+            if tour and content:
+                tour = Comment.objects.create(user=user, tour=tour, content=content)
                 return Response(data=AddCommentSerializer(tour).data, status=status.HTTP_201_CREATED)
             return Response(status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class BookTourViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView, generics.ListAPIView,
+                      generics.RetrieveAPIView):
+    queryset = BookTour.objects.all()
+    serializer_class = BookTourSerializer
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy','create']:
+            return [OwnerPermisson()]
+        return [permissions.IsAuthenticated()]
 # Create your views here.

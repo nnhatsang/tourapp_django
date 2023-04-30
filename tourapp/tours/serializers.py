@@ -26,7 +26,7 @@ class AttractionCompactSerializer(ModelSerializer):
 class AddCommentSerializer(ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'content', 'tour', 'user']
+        fields = ['id', 'content', 'tour', 'user', 'updated_date']
         extra_kwargs = {
             'user': {
                 'read_only': True
@@ -184,3 +184,10 @@ class RateSerializer(ModelSerializer):
     class Meta:
         model = Rate
         exclude = ['tour']
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = '__all__'
+        fields = '__all__'
