@@ -44,12 +44,21 @@ class AttractionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retriev
 # Ratiing
 class RateViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Rate.objects.all()
-    serializer_class = RateSerializer
+    serializer_class = AddRateSerializer
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'destroy']:
             return [OwnerPermisson()]
-        return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+    def create(self, request):
+        serializer = AddRateSerializer(data=request.data)
+        if serializer.is_valid():
+            # gán người dùng hiện tại vào trường user của đối tượng Rate
+            serializer.validated_data['user'] = request.user
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 ##USER
@@ -135,17 +144,48 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         return paginator.get_paginated_response(
             CommentSerializer(page, many=True, context={'request': request}).data)
 
-    # @action(methods=['get'], url_path='images', detail=True, permission_classes=[permissions.AllowAny])
-    # def get_images(self, request, pk):
-    #     images = self.get_object().images
-    #     return Response(data=ImageTourSerializer(images, many=True, context={'request': request}).data,
-    #                     status=status.HTTP_200_OK)
+    @action(methods=['get'], url_path='customers', detail=True, permission_classes=[permissions.IsAuthenticated])
+    def get_customer(self, request, pk):
+        customers = self.get_object().customers
+        return Response(data=CustomerSerializer(customers, many=True, request={'request': request}).data)
+
+    @action(methods=['get'], url_path='images', detail=True)
+    def get_images(self, request, pk):
+        images = self.get_object().images.all()
+        return Response(data=ImageTourSerializer(images, many=True, context={'request': request}).data,
+                        status=status.HTTP_200_OK)
 
     # @action(methods=['get'], url_path='rate', detail=True, permission_classes=[permissions.AllowAny])
     # def get_rate(self, request, pk):
-    #     rates = self.get_object().rate
-    #     paginator = RatePaginator()
-    #     page = paginator.paginate_queryset(rates, request)
-    #     return paginator.get_paginated_response(
-    #         RateSerializer(page, many=True, context={'request': request}).data)
+    #     tour = self.get_object()
+    #     rates = tour.rates.all()
+    #     paginatior = RatePaginator()
+    #     rates = paginatior.paginate_queryset(rates, request)
+    #     return paginatior.get_paginated_response(RateSerializer(rates, many=True).data)
+
+
+class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = AddCommentSerializer
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [OwnerPermisson()]
+        return [permissions.IsAuthenticated()]
+
+    def create(self, request):
+        user = request.user
+        if user:
+            try:
+                star_rate = request.data.get('star_rate')
+                tour = Tour.objects.get(pk=request.data.get('tour'))
+            except:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            if tour and star_rate:
+                tour = Comment.objects.create(user=user, tour=tour, star_rate=star_rate)
+                return Response(data=AddCommentSerializer(tour).data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
 # Create your views here.

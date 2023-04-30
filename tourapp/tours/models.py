@@ -100,6 +100,9 @@ class Comment(BaseModel):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=255, blank=True)
 
+    class Meta:
+        abstract: True
+
     def __str__(self):
         return "User: \"{0}\" --- \"{1}\" content: \"{2}\" ".format(self.user.__str__(), self.tour.__str__(),
                                                                     self.content.__str__())
@@ -113,8 +116,8 @@ class Like(BaseModel):
     def __str__(self):
         return " \"{0}\" --- Like (\"{1}\") Tour \"{2}\"".format(self.user.__str__(), self.state.__str__(),
                                                                  self.tour.__str__())
-    # class Meta:
-    #     unique_together = ('user', 'tour')
+    class Meta:
+        unique_together = ('user', 'tour')
 
 
 class Rate(BaseModel):
@@ -125,8 +128,8 @@ class Rate(BaseModel):
     def __str__(self):
         return " User \"{0}\" Rating tour: \"{1}\" : \"{2}\" *".format(self.user.__str__(), self.tour.__str__(),
                                                                        self.star_rate.__str__())
-    # class Meta:
-    #     unique_together = ('user', 'tour')
+    class Meta:
+        unique_together = ('user', 'tour')
 
 
 # bill

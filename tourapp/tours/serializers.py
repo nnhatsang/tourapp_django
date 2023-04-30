@@ -26,7 +26,7 @@ class AttractionCompactSerializer(ModelSerializer):
 class AddCommentSerializer(ModelSerializer):
     class Meta:
         model = Comment
-        exclude = []
+        fields = ['id', 'content', 'tour', 'user']
         extra_kwargs = {
             'user': {
                 'read_only': True
@@ -58,7 +58,7 @@ class TourSerializer(ModelSerializer):
         exclude = ['customers', 'image', 'tag']
         extra_kwargs = {
             'image_tour': {
-               'read_only': True
+                'read_only': True
             },
         }
 
@@ -108,7 +108,7 @@ class ImageTourSerializer(ModelSerializer):
 class AddRateSerializer(ModelSerializer):
     class Meta:
         model = Rate
-        fields = ['id', 'user', 'tour', 'star_rate']
+        fields = ['id', 'star_rate', 'tour', 'user']
         extra_kwargs = {
             'user': {
                 'read_only': True
@@ -151,8 +151,27 @@ class UserSerializer(ModelSerializer):
         }
 
 
+class CustomerSerializer(ModelSerializer):
+    image_avatar = serializers.SerializerMethodField(source='avatar')
+
+    def get_image_avatar(self, obj):
+        request = self.context.get('request')
+        path = "/%s" % obj.avatar.name
+        if request:
+            return request.build_absolute_uri(path)
+
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'first_name', 'last_name', 'email', 'phone', 'image_avatar']
+        kwargs = {
+            'image_avatar': {
+                'read_only': True
+            },
+        }
+
+
 class CommentSerializer(ModelSerializer):
-    # user = UserSerializer()
+    user = UserSerializer()
 
     class Meta:
         exclude = ['tour']
@@ -160,8 +179,8 @@ class CommentSerializer(ModelSerializer):
 
 
 class RateSerializer(ModelSerializer):
-    # user = UserSerializer()
+    user = UserSerializer()
 
     class Meta:
         model = Rate
-        exclude = []
+        exclude = ['tour']
