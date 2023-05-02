@@ -40,7 +40,6 @@ class TourForm(forms.ModelForm):
 
 
 class TourAdmin(admin.ModelAdmin):
-
     list_display = ('pk', 'name', 'attraction', 'departure_date', 'end_date', 'avatar')
     list_display_links = ('name',)
     search_fields = ('name',)
@@ -56,6 +55,7 @@ class TourAdmin(admin.ModelAdmin):
 class ImageTourAdmin(admin.ModelAdmin):
     list_display = ('pk', 'view_image', 'tour', 'active')
     search_fields = ('descriptions',)
+
     def view_image(self, obj):
         if (obj.image):
             return mark_safe(
@@ -63,10 +63,10 @@ class ImageTourAdmin(admin.ModelAdmin):
             )
 
 
-
 class BookingTourAdmin(admin.ModelAdmin):
     list_display = ('pk', 'booking_information', 'created_date', 'updated_date', 'active')
     list_display_links = ('pk', 'booking_information', 'created_date', 'updated_date', 'active')
+
     def booking_information(self, obj):
         return obj.__str__()
 
@@ -106,7 +106,25 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+class PermissionAdmin(admin.ModelAdmin):
+    search_fields = ('name',)
+
+
+class BlogAdmin(admin.ModelAdmin):
+    model = Blog
+    search_fields = ('title',)
+    list_display = ('title','image_view','user')
+    list_filter = ('user','created_date','updated_date')
+    def image_view(self, new):
+        if new.image:
+            return mark_safe(
+                '<img src="/{url}" width="120" />'.format(url=new.image.name)
+            )
+
+
 # Register your models here.
+# admin.site.register(Group)
+admin.site.register(Permission, PermissionAdmin)
 
 admin.site.register(User, MyUserAdmin)
 admin.site.register(Tour, TourAdmin)
@@ -118,3 +136,6 @@ admin.site.register(Bill)
 admin.site.register(Like)
 admin.site.register(BookTour, BookingTourAdmin)
 admin.site.register(ImageTour, ImageTourAdmin)
+admin.site.register(CommentBlog)
+admin.site.register(LikeBlog)
+admin.site.register(Blog, BlogAdmin)

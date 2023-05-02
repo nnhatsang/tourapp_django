@@ -52,29 +52,28 @@ class Tour(BaseModel):
     def __str__(self):
         return self.name
 
-    # def save(self, *args, **kwargs):
-    #     if self.image:
-    #         super(BaseModel, self).save(*args, **kwargs)
-    #         self.image.name = "static/{img_name}".format(img_name=self.image.name)
-    #         super(BaseModel, self).save(*args, **kwargs)
-
-
-class ImageTour(BaseModel):
-    image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
-    tour = models.ForeignKey('Tour', on_delete=models.SET_NULL, null=True)
-    descriptions = models.CharField(max_length=255, null=True)
-
-    class Meta:
-        verbose_name = 'Image of tour'
-
-    def __str__(self):
-        return self.tour
-
     def save(self, *args, **kwargs):
         if self.image:
             super(BaseModel, self).save(*args, **kwargs)
             self.image.name = "static/{img_name}".format(img_name=self.image.name)
             super(BaseModel, self).save(*args, **kwargs)
+
+
+class ImageTour(BaseModel):
+    image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
+    tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='images', null=True)
+    descriptions = models.CharField(max_length=255, null=True)
+
+
+def __str__(self):
+    return self.tour
+
+
+def save(self, *args, **kwargs):
+    if self.image:
+        super(BaseModel, self).save(*args, **kwargs)
+        self.image.name = "static/{img_name}".format(img_name=self.image.name)
+        super(BaseModel, self).save(*args, **kwargs)
 
 
 class Attraction(BaseModel):
@@ -89,6 +88,7 @@ class BookTour(BaseModel):
     tour = models.ForeignKey('Tour', on_delete=models.CASCADE)
     num_of_adults = models.IntegerField(default=0)
     num_of_children = models.IntegerField(default=0)
+    send_mail = models.BooleanField(default=False)
 
     def __str__(self):
         return " User: \"{0}\" Booking tour : \"{1}\" ".format(self.user.__str__(), self.tour.__str__())
@@ -116,6 +116,7 @@ class Like(BaseModel):
     def __str__(self):
         return " \"{0}\" --- Like (\"{1}\") Tour \"{2}\"".format(self.user.__str__(), self.state.__str__(),
                                                                  self.tour.__str__())
+
     class Meta:
         unique_together = ('user', 'tour')
 
@@ -128,6 +129,7 @@ class Rate(BaseModel):
     def __str__(self):
         return " User \"{0}\" Rating tour: \"{1}\" : \"{2}\" *".format(self.user.__str__(), self.tour.__str__(),
                                                                        self.star_rate.__str__())
+
     class Meta:
         unique_together = ('user', 'tour')
 
@@ -140,3 +142,35 @@ class Bill(BaseModel):
 
     def __str__(self):
         return "Bill --- {}".format(self.book_tour.__str__())
+
+
+##Update blogtour
+class Blog(BaseModel):
+    title = models.CharField(max_length=255, null=False, default="none")
+    content = RichTextField()
+    image = models.ImageField(null=True, upload_to='images/blogs/%Y/%m')
+    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return self.title
+
+
+class CommentBlog(BaseModel):
+    tour = models.ForeignKey('Blog', on_delete=models.CASCADE, related_name='comments', null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    content = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return self.content
+
+
+class LikeBlog(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    state = models.BooleanField(default=False)
+    blog = models.ForeignKey('Blog', on_delete=models.CASCADE, related_name='likes', null=True)
+
+    def __str__(self):
+        return " \"{0}\" --- Like (\"{1}\") Blog \"{2}\"".format(self.user.__str__(), self.state.__str__(),
+                                                                 self.blog.__str__())
+    class Meta:
+        unique_together = ('user', 'blog')

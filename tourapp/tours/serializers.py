@@ -1,14 +1,10 @@
+import datetime
+
 from .models import *
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-
-
-# from rest_framework.exceptions import AuthenticationFailed
-
-
-# from .register import register_social_user
-# from . import google, facebook
-# from django.conf import settings
+from datetime import datetime
+from typing import Dict
 
 
 class AttractionSerializer(ModelSerializer):
@@ -67,6 +63,29 @@ class BookTourSerializer(ModelSerializer):
     class Meta:
         model = BookTour
         exclude = []
+
+    def validate(self, data):
+        tour = data.get('tour')
+        departure_date = tour.departure_date
+        end_date = tour.end_date
+        user = data.get('user')
+        email = user.email
+        num_of_adults = data['num_of_adults']
+        num_of_children = data['num_of_children']
+        if not (tour.price_for_adults or tour.price_for_children):
+            raise serializers.ValidationError("Tour price is not set.")
+        if (num_of_adults <= 0) and (num_of_children <= 0):
+            raise serializers.ValidationError("Invalid number of people.")
+        if not email:
+            raise serializers.ValidationError(
+                'Users who do not have an email, please add email information before booking')
+
+        # if not (departure_date <= datetime.today().date() <= end_date):
+        #     raise serializers.ValidationError('Tour is not available on selected date')
+        if not (departure_date >= datetime.today().date() and end_date > departure_date):
+            raise serializers.ValidationError('Invalid date range')
+
+        return data
 
 
 class AddTourSerializer(ModelSerializer):
@@ -190,4 +209,39 @@ class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
         fields = '__all__'
+
+
+class BlogSerializer(serializers.ModelSerializer):
+    image_tour = serializers.SerializerMethodField(source='image')
+    user = UserSerializer()
+
+    def get_image_tour(self, obj):
+        request = self.context.get('request')
+        path = "/%s" % obj.image.name
+        # if obj.image:
+        #     image_tour = obj.image.url
+        if request:
+            return request.build_absolute_uri(path)
+
+    class Meta:
+        model = Blog
+        exclude = ['image']
+        extra_kwargs = {
+            'image_tour': {
+                "read_only": True
+            },
+        }
+
+
+class CommentBlogSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        exclude = ['blog']
+        model = CommentBlog
+
+
+class LikeBlogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LikeBlog
         fields = '__all__'

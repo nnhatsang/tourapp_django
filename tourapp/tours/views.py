@@ -193,7 +193,6 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
     def get_comments(self, request, pk):
         tour = self.get_object()
         comments = tour.comments.select_related('user')
-
         paginator = CommentPaginator()
         page = paginator.paginate_queryset(comments, request)
         return paginator.get_paginated_response(
@@ -258,7 +257,95 @@ class BookTourViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.Destroy
     serializer_class = BookTourSerializer
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy','create']:
+        if self.action in ['update', 'partial_update', 'destroy', 'create']:
             return [OwnerPermisson()]
         return [permissions.IsAuthenticated()]
-# Create your views here.
+
+    # def create(self, request):
+    #     serializer = BookTourSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         book_tour = serializer.save(user=request.user)  # Thêm user=request.user ở đây
+    #         book_tour.active = True
+    #         # tính tổng tiền trong bill
+    #         tour = book_tour.tour
+    #         num_of_adults = book_tour.num_of_adults
+    #         num_of_children = book_tour.num_of_children
+    #         total_price = num_of_adults * tour.price_for_adults + num_of_children * tour.price_for_children
+    #         # book_tour = serializer.save()
+    #         Bill.objects.create(book_tour=book_tour, total_price=total_price)
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     else:
+    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def create(self, request):
+        err_msg = None
+        user = request.user
+        tour = Tour.objects.get(pk=request.data.get('tour'))
+        check_time = tour.departure_date <= datetime.now().date()
+        if user:
+            if not user.email:
+                return Response(data={
+                    'error_msg': 'Users who do not have an email, please add email information before booking'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif check_time:
+                return Response(data={
+                    'error_msg': 'Expired tour booking'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif BookTour.objects.filter(user=user, tour__departure_date=tour.departure_date).exists():
+                return Response(data={'error_msg': 'You have already booked a tour on this day.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                num_of_children = int(request.data.get('num_of_children'))
+                num_of_adults = int(request.data.get('num_of_adults'))
+                # if num_of_adults <= 0 or num_of_children <= 0:
+                #     return Response(data={
+                #         'error_msg': 'Number of adults and children must be greater than 0'
+                #     }, status=status.HTTP_400_BAD_REQUEST)
+                try:
+                    book_tour = BookTour.objects.create(num_of_adults=num_of_adults, num_of_children=num_of_children,
+                                                        user=user, tour=tour)
+                    serializers = BookTourSerializer(book_tour)
+                    bill = Bill.objects.create(book_tour=book_tour)
+                    total_price = tour.price_for_children * float(num_of_children) + float(
+                        num_of_adults) * tour.price_for_adults
+                    bill.total_price = total_price
+                    bill.save()
+                    return Response(data=serializers.data, status=status.HTTP_201_CREATED)
+                except Exception as e:
+                    err_msg = e.__str__()
+                return Response(data={
+                    'error_msg': err_msg
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'], url_path='total_price', detail=True)
+    def get_total_price(self, request, pk):
+        book_tour = self.get_object()
+        tour = self.get_object().tour
+        total_price = tour.price_for_children * book_tour.num_of_children + book_tour.num_of_adults * tour.price_for_adults
+        return Response(data={'total-price': total_price},
+                        status=status.HTTP_200_OK)
+
+
+class BillViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
+    queryset = Bill.objects.filter(active=True)
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = BillSerializer
+
+    def get_queryset(self):
+        bills = self.queryset
+        # bills = bills.select_related('payment_type')
+        return bills
+
+    @action(methods=['get'], url_path='book_tour_info', detail=True)
+    def book_tour_infor(self, request, pk):
+        try:
+            bill = Bill.objects.get(pk=pk)
+            book_tour = bill.book_tour
+            tour = book_tour.tour
+            serializer = TourSerializer(tour)
+
+            return Response(serializer.data)
+
+        except Bill.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
