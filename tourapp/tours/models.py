@@ -4,7 +4,6 @@ from ckeditor.fields import RichTextField
 from datetime import datetime
 
 
-
 # Create your models here.
 class User(AbstractUser):
     avatar = models.ImageField(null=True, upload_to='images/users/%Y/%m')
@@ -14,11 +13,11 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-    def save(self, *args, **kwargs):
-        if self.avatar:
-            super(AbstractUser, self).save(*args, **kwargs)
-            self.avatar.name = "static/{avt_name}".format(avt_name=self.avatar.name)
-            super(AbstractUser, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.avatar:
+    #         super(AbstractUser, self).save(*args, **kwargs)
+    #         self.avatar.name = "static/{avt_name}".format(avt_name=self.avatar.name)
+    #         super(AbstractUser, self).save(*args, **kwargs)
 
 
 class BaseModel(models.Model):
@@ -54,32 +53,18 @@ class Tour(BaseModel):
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        if self.image:
-            super(BaseModel, self).save(*args, **kwargs)
-            self.image.name = "static/{img_name}".format(img_name=self.image.name)
-            super(BaseModel, self).save(*args, **kwargs)
-
 
 class ImageTour(BaseModel):
     image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
-    tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='images', null=True)
+    tour = models.ForeignKey('Tour', on_delete=models.CASCADE, null=True)
     descriptions = models.CharField(max_length=255, null=True)
 
-
-def __str__(self):
-    return self.tour
-
-
-def save(self, *args, **kwargs):
-    if self.image:
-        super(BaseModel, self).save(*args, **kwargs)
-        self.image.name = "static/{img_name}".format(img_name=self.image.name)
-        super(BaseModel, self).save(*args, **kwargs)
+    def __str__(self):
+        return self.descriptions
 
 
 class Attraction(BaseModel):
-    location = models.CharField(max_length=50, default="none")
+    location = models.CharField(max_length=50, default="none", unique=True)
 
     def __str__(self):
         return self.location

@@ -3,6 +3,10 @@ import datetime
 from .models import *
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
+from django.core.files.storage import default_storage
+
+from django.conf import settings
+
 from datetime import datetime
 from typing import Dict
 
@@ -54,7 +58,7 @@ class TourSerializer(ModelSerializer):
 
     def get_image_tour(self, obj):
         request = self.context.get('request')
-        path = "/%s" % obj.image.name
+        path = "/static/%s" % obj.image.name
         # if obj.image:
         #     image_tour = obj.image.url
         if request:
@@ -75,28 +79,28 @@ class BookTourSerializer(ModelSerializer):
         model = BookTour
         exclude = []
 
-    def validate(self, data):
-        tour = data.get('tour')
-        departure_date = tour.departure_date
-        end_date = tour.end_date
-        user = data.get('user')
-        email = user.email
-        num_of_adults = data['num_of_adults']
-        num_of_children = data['num_of_children']
-        if not (tour.price_for_adults or tour.price_for_children):
-            raise serializers.ValidationError("Tour price is not set.")
-        if (num_of_adults <= 0) and (num_of_children <= 0):
-            raise serializers.ValidationError("Invalid number of people.")
-        if not email:
-            raise serializers.ValidationError(
-                'Users who do not have an email, please add email information before booking')
-
-        # if not (departure_date <= datetime.today().date() <= end_date):
-        #     raise serializers.ValidationError('Tour is not available on selected date')
-        if not (departure_date >= datetime.today().date() and end_date > departure_date):
-            raise serializers.ValidationError('Invalid date range')
-
-        return data
+    # def validate(self, data):
+    #     tour = data.get('tour')
+    #     departure_date = tour.departure_date
+    #     end_date = tour.end_date
+    #     user = data.get('user')
+    #     email = user.email
+    #     num_of_adults = data['num_of_adults']
+    #     num_of_children = data['num_of_children']
+    #     if not (tour.price_for_adults or tour.price_for_children):
+    #         raise serializers.ValidationError("Tour price is not set.")
+    #     if (num_of_adults <= 0) and (num_of_children <= 0):
+    #         raise serializers.ValidationError("Invalid number of people.")
+    #     if not email:
+    #         raise serializers.ValidationError(
+    #             'Users who do not have an email, please add email information before booking')
+    #
+    #     # if not (departure_date <= datetime.today().date() <= end_date):
+    #     #     raise serializers.ValidationError('Tour is not available on selected date')
+    #     if not (departure_date >= datetime.today().date() and end_date > departure_date):
+    #         raise serializers.ValidationError('Invalid date range')
+    #
+    #     return data
 
 
 class AddTourSerializer(ModelSerializer):
@@ -114,17 +118,16 @@ class BillSerializer(ModelSerializer):
 class ImageTourSerializer(ModelSerializer):
     image_tour = serializers.SerializerMethodField(source='image')
 
-    def get_image_tour(self, obj):
-        request = self.context.get('request')
-        path = "/%s" % obj.image.name
-        # if obj.image:
-        #     image_tour = obj.image.url
-        if request:
-            return request.build_absolute_uri(path)
+    def get_image_tour(self, ImageTour):
+        return "http://127.0.0.1:8000/static/" + str(ImageTour.image)
+        # request = self.context.get('request')
+        # path = "/static/%s" % obj.image.name
+        # if request:
+        #     return request.build_absolute_uri(path)
 
     class Meta:
         model = ImageTour
-        exclude = ['image_tour', 'descriptions']
+        fields = ['image_tour', 'descriptions']
         extra_kwargs = {
             'image_tour': {
                 "read_only": True
@@ -151,7 +154,7 @@ class UserSerializer(ModelSerializer):
 
     def get_image_avatar(self, obj):
         request = self.context.get('request')
-        path = "/%s" % obj.avatar.name
+        path = "/static/%s" % obj.avatar.name
         if request:
             return request.build_absolute_uri(path)
 
@@ -186,7 +189,7 @@ class CustomerSerializer(ModelSerializer):
 
     def get_image_avatar(self, obj):
         request = self.context.get('request')
-        path = "/%s" % obj.avatar.name
+        path = "/static/%s" % obj.avatar.name
         if request:
             return request.build_absolute_uri(path)
 
@@ -228,7 +231,7 @@ class BlogSerializer(serializers.ModelSerializer):
 
     def get_image_tour(self, obj):
         request = self.context.get('request')
-        path = "/%s" % obj.image.name
+        path = "/static/%s" % obj.image.name
         # if obj.image:
         #     image_tour = obj.image.url
         if request:

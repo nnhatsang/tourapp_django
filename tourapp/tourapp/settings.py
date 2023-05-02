@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'oauth2_provider',
-    'cloudinary'
+    'cloudinary',
+    'corsheaders'
 ]
 
 REST_FRAMEWORK = {
@@ -53,7 +54,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 5,
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser'
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.JSONParser',
     )
 
 }
@@ -67,7 +69,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
+
 ]
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'tourapp.urls'
 CKEDITOR_UPLOAD_PATH = "images/ckeditor/"
@@ -113,6 +119,7 @@ DATABASES = {
         'HOST': ''  # mặc định localhost
     }
 }
+ALLOWED_HOSTS = ['localhost','127.0.0.1',]
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -153,5 +160,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-client_secret = 'EiCySd7WrnG993TAmStwodi0Qou7UiGQTSC1Y9QCMOy8yVR6MA1XcbQih9j0uDesR84qs14EwKQ8sOFZllPZKhqcUydY634t9IhqsZ8tO8UoxlqjA9qWeAw4pdpp2ntx'
-client_id = 'bfC3485lV1Pf4y2TWOKi0P3Rq65g6jhj4nAr3Y0e'
+client_secret = 'N4n1DfXoj70hsrVlC9Byl4NPqJydCNmwPyhpqK4SZRPINsAigjBgUfZkZLZPMedxC7kbr8Vqt1swUBSAllHo8ePPfX4PlnRsibCNrdbxORjBsCBbAyqf4Ajw7snJdtHq'
+client_id = 'F03YLHhBuWKPCJxqh49Ft0ufBk1D1MJBqSVQ8KPo'
+

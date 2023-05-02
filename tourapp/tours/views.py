@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser
 from .paginators import *
 from .perms import *
 
-from django.db.models import DecimalField, ExpressionWrapper, Q
+from django.db.models import DecimalField, ExpressionWrapper, Q, Avg
 from decimal import Decimal
 from datetime import datetime, date
 from django.core.paginator import Paginator
@@ -155,32 +155,30 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         query = self.queryset
         query = query.select_related('attraction')
         kw = self.request.query_params.get('kw')
-        departure_date = self.request.query_params.get('departure_date')
+        departure_str = self.request.query_params.get('departure_date')
         price_from = self.request.query_params.get('price_from')
         price_to = self.request.query_params.get('price_to')
 
         if kw:
             query = query.filter(name__icontains=kw)
         if price_from or price_to:
-            price_expression = ExpressionWrapper(
-                Q(price_for_adults__gte=price_from, price_for_adults__lte=price_to) | \
-                Q(price_for_children__gte=price_from, price_for_children__lte=price_to),
-                output_field=DecimalField()
-            )
-            query = query.annotate(price_range=price_expression)
-            if price_from:
-                query = query.filter(Q(price_range__gte=Decimal(price_from)))
-            if price_to:
-                query = query.filter(Q(price_range__lte=Decimal(price_to)))
-        if departure_date:
+            if price_to and price_from:
+                query = query.filter(
+                    Q(price_for_adults__gte=Decimal(price_from), price_for_adults__lte=Decimal(price_to)) | \
+                    Q(price_for_children__gte=Decimal(price_from), price_for_children__lte=Decimal(price_to)))
+            elif price_from:
+                query = query.filter(Q(price_for_adults__gte=Decimal(price_from)) | \
+                                     Q(price_for_children__gte=Decimal(price_from)))
+            else:
+                query = query.filter(Q(price_for_adults__lte=Decimal(price_to)) | \
+                                     Q(price_for_children__lte=Decimal(price_to)))
+        if departure_str:
             try:
-                departure_date = datetime.strptime(departure_date, "%Y-%m-%d").date()
+                departure_date = datetime.strptime(departure_str, "%Y-%m-%d").date()
             except:
                 query = query.none()
             else:
-                query = query.filter(departure_date__year=departure_date.year,
-                                     departure_date__month=departure_date.month,
-                                     departure_date__day=departure_date.day)
+                query = query.filter(departure_date__exact=departure_date)
         return query
 
     @action(methods=['get'], url_path='tags', detail=True)
@@ -212,7 +210,6 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
 
         imagetours = ImageTour.objects.filter(tour=tour)
         serializer = ImageTourSerializer(imagetours, many=True)
-
         return Response(serializer.data)
 
     @action(methods=['get'], url_path='rates', detail=True, permission_classes=[permissions.AllowAny])
@@ -224,6 +221,17 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         pagination.PageNumberPagination.page_size = 10
         rate = paginator.paginate_queryset(rate, request)
         return paginator.get_paginated_response(RateSerializer(rate, many=True).data)
+
+    @action(methods=['get'], url_path='rate_average', detail=True, permission_classes=[permissions.AllowAny])
+    def get_rate_average(self, request, pk):
+        tour = self.get_object()
+        if tour:
+            star_avetage = Rate.objects.filter(tour=tour).aggregate(avg=Avg('star_rate'))['avg']
+            if not star_avetage:
+                star_avetage = 0
+            return Response(data={"star_avg": star_avetage}, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
@@ -323,10 +331,10 @@ class BookTourViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.Destroy
             else:
                 num_of_children = int(request.data.get('num_of_children'))
                 num_of_adults = int(request.data.get('num_of_adults'))
-                # if num_of_adults <= 0 or num_of_children <= 0:
-                #     return Response(data={
-                #         'error_msg': 'Number of adults and children must be greater than 0'
-                #     }, status=status.HTTP_400_BAD_REQUEST)
+                if num_of_adults <= 0 or num_of_children <= 0:
+                    return Response(data={
+                        'error_msg': 'Number of adults and children must be greater than 0'
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 try:
                     book_tour = BookTour.objects.create(num_of_adults=num_of_adults, num_of_children=num_of_children,
                                                         user=user, tour=tour)
@@ -392,3 +400,18 @@ class TagViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVie
     def get_tours(self, request, pk):
         tours = self.get_object().tours
         return Response(data=TourSerializer(tours, many=True).data)
+
+
+class BlogViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+    serializer_class = BlogSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = BlogPaginator
+    queryset = Blog.objects.filter(active=True)
+
+    def get_queryset(self):
+        blog = self.queryset
+        blog = blog.select_related('user')
+        kw = self.request.query_params.get('kw')
+        if kw:
+            blog = blog.filter(title__icontains=kw)
+        return blog
