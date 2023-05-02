@@ -251,6 +251,31 @@ class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyA
             return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CommentBlogViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = CommentBlog.objects.all()
+    serializer_class = AddCommentBlogSerializer
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [OwnerPermisson()]
+        return [permissions.IsAuthenticated()]
+
+    def create(self, request):
+        user = request.user
+        if user:
+            try:
+                content = request.data.get('content')
+                blog = Blog.objects.get(pk=request.data.get('blog'))
+            except:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            if blog and content:
+                blog = CommentBlog.objects.create(user=user, blog=blog, content=content)
+                return Response(data=AddCommentBlogSerializer(blog).data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class BookTourViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView, generics.ListAPIView,
                       generics.RetrieveAPIView):
     queryset = BookTour.objects.all()
@@ -349,3 +374,21 @@ class BillViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
 
         except Bill.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class TagViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        query = self.queryset
+        kw = self.request.query_params.get('kw')
+        if kw:
+            query = query.filter(name__icontains=kw)
+        return query
+
+    @action(methods=['get'], url_path='tours', detail=True)
+    def get_tours(self, request, pk):
+        tours = self.get_object().tours
+        return Response(data=TourSerializer(tours, many=True).data)

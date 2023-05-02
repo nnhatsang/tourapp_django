@@ -30,6 +30,17 @@ class AddCommentSerializer(ModelSerializer):
         }
 
 
+class AddCommentBlogSerializer(ModelSerializer):
+    class Meta:
+        model = CommentBlog
+        fields = ['id', 'content', 'blog', 'user', 'updated_date']
+        extra_kwargs = {
+            'user': {
+                'read_only': True
+            }
+        }
+
+
 class TagSerializer(ModelSerializer):
     class Meta:
         model = Tag
