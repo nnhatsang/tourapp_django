@@ -4,7 +4,6 @@ from ckeditor.fields import RichTextField
 from datetime import datetime
 
 
-
 # Create your models here.
 class User(AbstractUser):
     avatar = models.ImageField(null=True, upload_to='images/users/%Y/%m')
@@ -66,16 +65,8 @@ class ImageTour(BaseModel):
     tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='images', null=True)
     descriptions = models.CharField(max_length=255, null=True)
 
-
-def __str__(self):
-    return self.tour
-
-
-def save(self, *args, **kwargs):
-    if self.image:
-        super(BaseModel, self).save(*args, **kwargs)
-        self.image.name = "static/{img_name}".format(img_name=self.image.name)
-        super(BaseModel, self).save(*args, **kwargs)
+    def __str__(self):
+        return self.tour
 
 
 class Attraction(BaseModel):
