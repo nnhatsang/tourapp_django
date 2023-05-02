@@ -74,7 +74,7 @@ class BookingTourAdmin(admin.ModelAdmin):
 class MyUserAdmin(UserAdmin):
     model = User
     search_fields = ('username', 'first_name', 'last_name')
-    list_display = ('pk', 'username',)
+    list_display = ('id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'date_joined', 'last_login', 'avatar_view')
     list_display_links = ('username',)
     list_filter = ('is_staff', 'is_superuser', 'is_customer')
     readonly_fields = ('last_login', 'date_joined', 'avatar_view')
@@ -113,8 +113,9 @@ class PermissionAdmin(admin.ModelAdmin):
 class BlogAdmin(admin.ModelAdmin):
     model = Blog
     search_fields = ('title',)
-    list_display = ('title','image_view','user')
-    list_filter = ('user','created_date','updated_date')
+    list_display = ('title', 'image_view', 'user')
+    list_filter = ('user', 'created_date', 'updated_date')
+
     def image_view(self, new):
         if new.image:
             return mark_safe(
@@ -139,3 +140,4 @@ admin.site.register(ImageTour, ImageTourAdmin)
 admin.site.register(CommentBlog)
 admin.site.register(LikeBlog)
 admin.site.register(Blog, BlogAdmin)
+admin.site.register(PaymentMethod)

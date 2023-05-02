@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from ckeditor.fields import RichTextField
+from datetime import datetime
+
 
 
 # Create your models here.
@@ -104,8 +106,8 @@ class Comment(BaseModel):
         abstract: True
 
     def __str__(self):
-        return "User: \"{0}\" --- \"{1}\" content: \"{2}\" ".format(self.user.__str__(), self.tour.__str__(),
-                                                                    self.content.__str__())
+        updated_date = self.updated_date.strftime('%d/%m/%Y, time: %H:%M:%S')
+        return f"User: {self.user} - Tour: {self.tour} - Content: {self.content} on: {updated_date}"
 
 
 class Like(BaseModel):
@@ -114,8 +116,8 @@ class Like(BaseModel):
     tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='likes', null=True)
 
     def __str__(self):
-        return " \"{0}\" --- Like (\"{1}\") Tour \"{2}\"".format(self.user.__str__(), self.state.__str__(),
-                                                                 self.tour.__str__())
+        state = "liked" if self.state else "not liked"
+        return f"\"{self.user}\" --- {state} Blog \"{self.tour}\""
 
     class Meta:
         unique_together = ('user', 'tour')
@@ -127,8 +129,8 @@ class Rate(BaseModel):
     tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='rate', null=True)
 
     def __str__(self):
-        return " User \"{0}\" Rating tour: \"{1}\" : \"{2}\" *".format(self.user.__str__(), self.tour.__str__(),
-                                                                       self.star_rate.__str__())
+        stars = "⭐" * self.star_rate
+        return f"{self.user}'s rating for {self.tour}: {stars}"
 
     class Meta:
         unique_together = ('user', 'tour')
@@ -139,9 +141,12 @@ class Bill(BaseModel):
     book_tour = models.OneToOneField('BookTour', on_delete=models.CASCADE, primary_key=True)
     payment_state = models.BooleanField(default=False)
     total_price = models.FloatField(default=0)
+    payment_method = models.ForeignKey('PaymentMethod', on_delete=models.PROTECT, null=True,
+                                       default=None)
 
     def __str__(self):
-        return "Bill --- {}".format(self.book_tour.__str__())
+        formatted_price = f"{self.total_price:,.0f}".replace(",", ".") + " VNĐ"
+        return f"Bill for booking {self.book_tour}, total price: {formatted_price}"
 
 
 ##Update blogtour
@@ -156,12 +161,13 @@ class Blog(BaseModel):
 
 
 class CommentBlog(BaseModel):
-    tour = models.ForeignKey('Blog', on_delete=models.CASCADE, related_name='comments', null=True)
+    blog = models.ForeignKey('Blog', on_delete=models.CASCADE, related_name='comments', null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
-        return self.content
+        updated_date = self.updated_date.strftime('%d/%m/%Y, time: %H:%M:%S')
+        return f"User: {self.user} - Tour: {self.blog} - Content: {self.content} on: {updated_date}"
 
 
 class LikeBlog(BaseModel):
@@ -170,7 +176,16 @@ class LikeBlog(BaseModel):
     blog = models.ForeignKey('Blog', on_delete=models.CASCADE, related_name='likes', null=True)
 
     def __str__(self):
-        return " \"{0}\" --- Like (\"{1}\") Blog \"{2}\"".format(self.user.__str__(), self.state.__str__(),
-                                                                 self.blog.__str__())
+        state = "liked" if self.state else "not liked"
+        return f"\"{self.user}\" --- {state} Blog \"{self.blog}\""
+
     class Meta:
         unique_together = ('user', 'blog')
+
+
+##method_payment
+class PaymentMethod(BaseModel):
+    payment_type = models.CharField(max_length=50, null=False)
+
+    def __str__(self):
+        return self.payment_type
