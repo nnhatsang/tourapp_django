@@ -15,6 +15,12 @@ class CommentPaginator(pagination.PageNumberPagination):
     page_size = 10
     page_query_param = 'page'
 
+
 class RatePaginator(pagination.PageNumberPagination):
+    page_size = 10
+    page_query_param = 'page'
+
+
+class CommentBlogPaginator(pagination.PageNumberPagination):
     page_size = 10
     page_query_param = 'page'

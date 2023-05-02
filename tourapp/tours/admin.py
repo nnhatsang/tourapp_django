@@ -46,9 +46,10 @@ class TourAdmin(admin.ModelAdmin):
     form = TourForm
 
     def avatar(self, new):
+        print(new.image.name)
         if (new.image):
             return mark_safe(
-                '<img src="/{url}" width="120" />'.format(url=new.image.name)
+                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=new.image.name)
             )
 
 
@@ -59,7 +60,7 @@ class ImageTourAdmin(admin.ModelAdmin):
     def view_image(self, obj):
         if (obj.image):
             return mark_safe(
-                '<img src="/{url}" width="120" />'.format(url=obj.image.name)
+                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=obj.image.name)
             )
 
 
@@ -74,7 +75,8 @@ class BookingTourAdmin(admin.ModelAdmin):
 class MyUserAdmin(UserAdmin):
     model = User
     search_fields = ('username', 'first_name', 'last_name')
-    list_display = ('id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'date_joined', 'last_login', 'avatar_view')
+    list_display = ('id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'last_login',
+                    'avatar_view')
     list_display_links = ('username',)
     list_filter = ('is_staff', 'is_superuser', 'is_customer')
     readonly_fields = ('last_login', 'date_joined', 'avatar_view')
@@ -82,7 +84,7 @@ class MyUserAdmin(UserAdmin):
     def avatar_view(self, user):
         if (user.avatar):
             return mark_safe(
-                '<img src="/{url}" width="120" />'.format(url=user.avatar.name)
+                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=user.avatar.name)
             )
 
     add_fieldsets = (
@@ -119,7 +121,7 @@ class BlogAdmin(admin.ModelAdmin):
     def image_view(self, new):
         if new.image:
             return mark_safe(
-                '<img src="/{url}" width="120" />'.format(url=new.image.name)
+                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=new.image.name)
             )
 
 
