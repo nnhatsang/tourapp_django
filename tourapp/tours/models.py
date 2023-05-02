@@ -99,7 +99,7 @@ class BookTour(BaseModel):
 # user like cmt rating
 class Comment(BaseModel):
     tour = models.ForeignKey('Tour', on_delete=models.CASCADE, related_name='comments', null=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
     content = models.CharField(max_length=255, blank=True)
 
     class Meta:
@@ -161,8 +161,8 @@ class Blog(BaseModel):
 
 
 class CommentBlog(BaseModel):
-    blog = models.ForeignKey('Blog', on_delete=models.CASCADE, related_name='comments', null=True)
-    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+    blog = models.ForeignKey('Blog', on_delete=models.CASCADE,  null=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
     content = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
