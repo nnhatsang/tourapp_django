@@ -162,7 +162,7 @@ class Blog(BaseModel):
 
 class CommentBlog(BaseModel):
     blog = models.ForeignKey('Blog', on_delete=models.CASCADE, related_name='comments', null=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
     content = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
