@@ -13,11 +13,11 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-    def save(self, *args, **kwargs):
-        if self.avatar:
-            super(AbstractUser, self).save(*args, **kwargs)
-            self.avatar.name = "static/{avt_name}".format(avt_name=self.avatar.name)
-            super(AbstractUser, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.avatar:
+    #         super(AbstractUser, self).save(*args, **kwargs)
+    #         self.avatar.name = "static/{avt_name}".format(avt_name=self.avatar.name)
+    #         super(AbstractUser, self).save(*args, **kwargs)
 
 
 class BaseModel(models.Model):
@@ -52,12 +52,6 @@ class Tour(BaseModel):
 
     def __str__(self):
         return self.name
-
-    def save(self, *args, **kwargs):
-        if self.image:
-            super(BaseModel, self).save(*args, **kwargs)
-            self.image.name = "static/{img_name}".format(img_name=self.image.name)
-            super(BaseModel, self).save(*args, **kwargs)
 
 
 class ImageTour(BaseModel):
