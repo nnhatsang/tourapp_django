@@ -11,7 +11,8 @@ r.register('comments', views.CommentViewSet)
 r.register('book_tour', views.BookTourViewSet)
 r.register('bills', views.BillViewSet)
 r.register('tags', views.TagViewSet)
-r.register('blogs', views.BlogViewSet)
+r.register('blog', views.BlogViewSet)
+r.register('comment_blog', views.CommentBlogViewSet)
 
 urlpatterns = [
     path('', include(r.urls)),

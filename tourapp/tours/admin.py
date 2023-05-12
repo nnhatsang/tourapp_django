@@ -4,16 +4,12 @@ from django.contrib.admin.sites import NotRegistered
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib.auth.models import Permission, Group
-from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncMonth
-from django.template.response import TemplateResponse
+
 from django.utils.safestring import mark_safe
 from django import forms
-# from . import cloud_path
+from . import cloud_path
 from .models import *
-from django.urls import path
-from datetime import date
+
 
 
 class AttractionsForm(forms.ModelForm):
@@ -40,16 +36,17 @@ class TourForm(forms.ModelForm):
 
 
 class TourAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'attraction', 'departure_date', 'end_date', 'avatar')
+    list_display = ('pk', 'name', 'attraction', 'departure_date', 'end_date', 'view_image')
     list_display_links = ('name',)
     search_fields = ('name',)
     form = TourForm
 
-    def avatar(self, new):
-        print(new.image.name)
+    def view_image(self, new):
         if (new.image):
             return mark_safe(
-                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=new.image.name)
+                # '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=new.image.name)
+                "<img src='{cloud_path}{url}' alt='image' width='50' />".format(cloud_path=cloud_path, url=new.image)
+
             )
 
 
@@ -60,7 +57,9 @@ class ImageTourAdmin(admin.ModelAdmin):
     def view_image(self, obj):
         if (obj.image):
             return mark_safe(
-                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=obj.image.name)
+                # '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=obj.image.name)
+                "<img src='{cloud_path}{url}' alt='image' width='50' />".format(cloud_path=cloud_path, url=obj.image)
+
             )
 
 
@@ -84,7 +83,9 @@ class MyUserAdmin(UserAdmin):
     def avatar_view(self, user):
         if (user.avatar):
             return mark_safe(
-                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=user.avatar.name)
+                # '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=user.avatar.name)
+                "<img src='{cloud_path}{url}' alt='image' width='50' />".format(cloud_path=cloud_path, url=user.avatar)
+
             )
 
     add_fieldsets = (
@@ -121,12 +122,14 @@ class BlogAdmin(admin.ModelAdmin):
     def image_view(self, new):
         if new.image:
             return mark_safe(
-                '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=new.image.name)
+                # '<img src="http://127.0.0.1:8000/static/{url}" width="120" />'.format(url=new.image.name)
+                "<img src='{cloud_path}{url}' alt='image' width='50' />".format(cloud_path=cloud_path, url=new.image)
+
             )
 
 
 # Register your models here.
-# admin.site.register(Group)
+
 admin.site.register(Permission, PermissionAdmin)
 
 admin.site.register(User, MyUserAdmin)

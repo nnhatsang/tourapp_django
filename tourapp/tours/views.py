@@ -11,11 +11,12 @@ from rest_framework.parsers import MultiPartParser
 from .paginators import *
 from .perms import *
 
-from django.db.models import DecimalField, ExpressionWrapper, Q, Avg
+from django.db.models import DecimalField, ExpressionWrapper, Q, Avg, Sum
 from decimal import Decimal
 from datetime import datetime, date
 from django.core.paginator import Paginator
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView
 
 
 class AttractionViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -190,16 +191,33 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
     @action(detail=True, methods=['get'], url_path='comments', permission_classes=[permissions.AllowAny])
     def get_comments(self, request, pk):
         tour = self.get_object()
-        comments = tour.comments.select_related('user')
+        comments = tour.comments.select_related('user').order_by('-updated_date')
         paginator = CommentPaginator()
         page = paginator.paginate_queryset(comments, request)
         return paginator.get_paginated_response(
             CommentSerializer(page, many=True, context={'request': request}).data)
 
-    @action(methods=['get'], url_path='customers', detail=True, permission_classes=[permissions.IsAuthenticated])
-    def get_customer(self, request, pk):
-        customers = self.get_object().customers
-        return Response(data=CustomerSerializer(customers, many=True, request={'request': request}).data)
+
+    @action(methods=['post'], url_path='like', detail=True, permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, pk) :
+        tour = self.get_object()
+        user = request.user
+        like, _ = Like.objects.get_or_create(tour=tour, user=user)
+        like.state = not like.state
+        like.save()
+        return Response(status=status.HTTP_201_CREATED)
+
+    @action(methods=['get'], url_path='like_status', detail=True, permission_classes=[permissions.IsAuthenticated])
+    def like_status(self, request, pk):
+        tour = self.get_object()
+        try:
+            like_status = tour.likes.filter(user=request.user).first().state
+            if like_status:
+                return Response(data={'like_status': like_status}, status=status.HTTP_200_OK)
+            else:
+                return Response(data={'like_status': False}, status=status.HTTP_200_OK)
+        except:
+            return Response(data={'like_status': False}, status=status.HTTP_200_OK)
 
     @action(methods=['get'], url_path='images', detail=True)
     def get_imagetour(self, request, pk=None):
@@ -211,6 +229,7 @@ class TourViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         imagetours = ImageTour.objects.filter(tour=tour)
         serializer = ImageTourSerializer(imagetours, many=True)
         return Response(serializer.data)
+
 
     @action(methods=['get'], url_path='rates', detail=True, permission_classes=[permissions.AllowAny])
     def get_rates(self, request, pk):
@@ -259,29 +278,7 @@ class CommentViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyA
             return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CommentBlogViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
-    queryset = CommentBlog.objects.all()
-    serializer_class = AddCommentBlogSerializer
 
-    def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
-            return [OwnerPermisson()]
-        return [permissions.IsAuthenticated()]
-
-    def create(self, request):
-        user = request.user
-        if user:
-            try:
-                content = request.data.get('content')
-                blog = Blog.objects.get(pk=request.data.get('blog'))
-            except:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            if blog and content:
-                blog = CommentBlog.objects.create(user=user, blog=blog, content=content)
-                return Response(data=AddCommentBlogSerializer(blog).data, status=status.HTTP_201_CREATED)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BookTourViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView, generics.ListAPIView,
@@ -415,3 +412,51 @@ class BlogViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         if kw:
             blog = blog.filter(title__icontains=kw)
         return blog
+
+    @action(methods=['post'], url_path='like', detail=True, permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, pk) :
+        blog = self.get_object()
+        user = request.user
+        like, _ = LikeBlog.objects.get_or_create(blog=blog, user=user)
+        like.state = not like.state
+        like.save()
+        return Response(status=status.HTTP_201_CREATED)
+
+    @action(methods=['get'], url_path='like_status', detail=True, permission_classes=[permissions.IsAuthenticated])
+    def like_status(self, request, pk):
+        blog = self.get_object()
+        try:
+            like_status = blog.likes.filter(user=request.user).first().state
+            if like_status:
+                return Response(data={'like_status': like_status}, status=status.HTTP_200_OK)
+            else:
+                return Response(data={'like_status': False}, status=status.HTTP_200_OK)
+        except:
+            return Response(data={'like_status': False}, status=status.HTTP_200_OK)
+
+
+
+
+class CommentBlogViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = CommentBlog.objects.all()
+    serializer_class = AddCommentBlogSerializer
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [OwnerPermisson()]
+        return [permissions.IsAuthenticated()]
+
+    def create(self, request):
+        user = request.user
+        if user:
+            try:
+                content = request.data.get('content')
+                blog = Blog.objects.get(pk=request.data.get('blog'))
+            except:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            if blog and content:
+                blog = CommentBlog.objects.create(user=user, blog=blog, content=content)
+                return Response(data=AddCommentBlogSerializer(blog).data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(data={"error_message": "User not found"}, status=status.HTTP_400_BAD_REQUEST)

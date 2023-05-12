@@ -3,12 +3,7 @@ import datetime
 from .models import *
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from django.core.files.storage import default_storage
-
-from django.conf import settings
-
-from datetime import datetime
-from typing import Dict
+from . import cloud_path
 
 
 class AttractionSerializer(ModelSerializer):
@@ -57,12 +52,15 @@ class TourSerializer(ModelSerializer):
     image_tour = serializers.SerializerMethodField(source='image')
 
     def get_image_tour(self, obj):
-        request = self.context.get('request')
-        path = "/static/%s" % obj.image.name
-        # if obj.image:
-        #     image_tour = obj.image.url
-        if request:
-            return request.build_absolute_uri(path)
+        if obj.image:
+            path = '{cloud_path}{image_name}'.format(cloud_path=cloud_path, image_name=obj.image)
+            return path
+        # request = self.context.get('request')
+        # path = "/static/%s" % obj.image.name
+        # # if obj.image:
+        # #     image_tour = obj.image.url
+        # if request:
+        #     return request.build_absolute_uri(path)
 
     class Meta:
         model = Tour
@@ -118,8 +116,11 @@ class BillSerializer(ModelSerializer):
 class ImageTourSerializer(ModelSerializer):
     image_tour = serializers.SerializerMethodField(source='image')
 
-    def get_image_tour(self, ImageTour):
-        return "http://127.0.0.1:8000/static/" + str(ImageTour.image)
+    def get_image_tour(self, obj):
+        if obj.image:
+            path = '{cloud_path}{image_name}'.format(cloud_path=cloud_path, image_name=obj.image)
+            return path
+        # return "http://127.0.0.1:8000/static/" + str(ImageTour.image)
         # request = self.context.get('request')
         # path = "/static/%s" % obj.image.name
         # if request:
@@ -153,10 +154,14 @@ class UserSerializer(ModelSerializer):
     image_avatar = serializers.SerializerMethodField(source='avatar')
 
     def get_image_avatar(self, obj):
-        request = self.context.get('request')
-        path = "/static/%s" % obj.avatar.name
-        if request:
-            return request.build_absolute_uri(path)
+        if obj.avatar:
+            path = '{cloud_path}{image_name}'.format(cloud_path=cloud_path, image_name=obj.avatar)
+            return path
+        return None
+        # request = self.context.get('request')
+        # path = "/static/%s" % obj.avatar.name
+        # if request:
+        #     return request.build_absolute_uri(path)
 
     def create(self, validated_data):
         data = validated_data.copy()
@@ -188,10 +193,14 @@ class CustomerSerializer(ModelSerializer):
     image_avatar = serializers.SerializerMethodField(source='avatar')
 
     def get_image_avatar(self, obj):
-        request = self.context.get('request')
-        path = "/static/%s" % obj.avatar.name
-        if request:
-            return request.build_absolute_uri(path)
+        if obj.avatar:
+            path = '{cloud_path}{image_name}'.format(cloud_path=cloud_path, image_name=obj.avatar)
+            return path
+        return None
+        # request = self.context.get('request')
+        # path = "/static/%s" % obj.avatar.name
+        # if request:
+        #     return request.build_absolute_uri(path)
 
     class Meta:
         model = User
@@ -230,12 +239,15 @@ class BlogSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     def get_image_tour(self, obj):
-        request = self.context.get('request')
-        path = "/static/%s" % obj.image.name
-        # if obj.image:
-        #     image_tour = obj.image.url
-        if request:
-            return request.build_absolute_uri(path)
+        if obj.image:
+            path = '{cloud_path}{image_name}'.format(cloud_path=cloud_path, image_name=obj.image)
+            return path
+        # request = self.context.get('request')
+        # path = "/static/%s" % obj.image.name
+        # # if obj.image:
+        # #     image_tour = obj.image.url
+        # if request:
+        #     return request.build_absolute_uri(path)
 
     class Meta:
         model = Blog

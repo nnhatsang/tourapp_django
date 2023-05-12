@@ -1,12 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from ckeditor.fields import RichTextField
-from datetime import datetime
+from cloudinary.models import CloudinaryField
 
 
 # Create your models here.
 class User(AbstractUser):
-    avatar = models.ImageField(null=True, upload_to='images/users/%Y/%m')
+    # avatar = models.ImageField(null=True, upload_to='images/users/%Y/%m')
+    avatar = CloudinaryField('avatar', default='', null=True)
     is_customer = models.BooleanField(default=False, verbose_name='Customer status')
     home_town = models.CharField(max_length=50, null=True, blank=True)
 
@@ -48,14 +49,16 @@ class Tour(BaseModel):
     customers = models.ManyToManyField('User', through='BookTour', related_name='tours')
     tag = models.ManyToManyField('Tag', related_name='tours')
     description = RichTextField(null=True)
-    image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
+    # image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
+    image = CloudinaryField('image', default='', null=True)
 
     def __str__(self):
         return self.name
 
 
 class ImageTour(BaseModel):
-    image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
+    # image = models.ImageField(upload_to='images/tours/%Y/%m/', null=True)
+    image = CloudinaryField('image',default = '')
     tour = models.ForeignKey('Tour', on_delete=models.CASCADE, null=True)
     descriptions = models.CharField(max_length=255, null=True)
 
@@ -64,7 +67,7 @@ class ImageTour(BaseModel):
 
 
 class Attraction(BaseModel):
-    location = models.CharField(max_length=50, default="none", unique=True)
+    location = models.CharField(max_length=50, default="none")
 
     def __str__(self):
         return self.location
@@ -138,7 +141,7 @@ class Bill(BaseModel):
 class Blog(BaseModel):
     title = models.CharField(max_length=255, null=False, default="none")
     content = RichTextField()
-    image = models.ImageField(null=True, upload_to='images/blogs/%Y/%m')
+    image = CloudinaryField('image',default = '')
     user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
